@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}我的衣柜 - 穿搭AI{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">我的衣柜</h1>
+        <button id="addClothingBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+            添加衣物
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white shadow rounded-lg p-4 mb-6">
+    <div class="flex flex-wrap gap-4">
+        <div class="flex-1 min-w-64">
+            <input type="text" id="searchInput" placeholder="搜索衣物..."
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <select id="categoryFilter"
+                class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">所有分类</option>
+                <option value="上衣">上衣</option>
+                <option value="裤子">裤子</option>
+                <option value="裙子">裙子</option>
+                <option value="鞋子">鞋子</option>
+                <option value="配饰">配饰</option>
+                <option value="外套">外套</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Clothing Grid -->
+<div id="clothingGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <p class="text-gray-500 text-center col-span-full">加载中...</p>
+</div>
+
+<!-- Add Clothing Modal -->
+<div id="addClothingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">添加衣物</h2>
+            <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="addClothingForm">
+            <div class="mb-4">
+                <label for="clothingName" class="block text-sm font-medium text-gray-700 mb-2">名称</label>
+                <input type="text" id="clothingName" name="name" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingCategory" class="block text-sm font-medium text-gray-700 mb-2">分类</label>
+                <select id="clothingCategory" name="category" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">请选择</option>
+                    <option value="上衣">上衣</option>
+                    <option value="裤子">裤子</option>
+                    <option value="裙子">裙子</option>
+                    <option value="鞋子">鞋子</option>
+                    <option value="配饰">配饰</option>
+                    <option value="外套">外套</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingColor" class="block text-sm font-medium text-gray-700 mb-2">颜色 (用逗号分隔)</label>
+                <input type="text" id="clothingColor" name="color" placeholder="红色, 蓝色"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingStyle" class="block text-sm font-medium text-gray-700 mb-2">风格 (用逗号分隔)</label>
+                <input type="text" id="clothingStyle" name="style" placeholder="休闲, 运动"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingSeason" class="block text-sm font-medium text-gray-700 mb-2">季节 (用逗号分隔)</label>
+                <input type="text" id="clothingSeason" name="season" placeholder="春, 夏"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingBrand" class="block text-sm font-medium text-gray-700 mb-2">品牌</label>
+                <input type="text" id="clothingBrand" name="brand"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingSize" class="block text-sm font-medium text-gray-700 mb-2">尺码</label>
+                <input type="text" id="clothingSize" name="size"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="clothingMaterial" class="block text-sm font-medium text-gray-700 mb-2">材质</label>
+                <input type="text" id="clothingMaterial" name="material"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-6">
+                <label for="clothingImage" class="block text-sm font-medium text-gray-700 mb-2">图片</label>
+                <input type="file" id="clothingImage" name="image" accept="image/*" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
+                添加
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let allClothes = [];
+
+async function loadClothes() {
+    const token = localStorage.getItem('access_token');
+    const category = document.getElementById('categoryFilter').value;
+    const search = document.getElementById('searchInput').value;
+
+    let url = '/api/v1/wardrobe?';
+    if (category) url += `category=${encodeURIComponent(category)}&`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            allClothes = await response.json();
+            renderClothes();
+        } else {
+            document.getElementById('clothingGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">加载失败</p>';
+        }
+    } catch (error) {
+        document.getElementById('clothingGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">加载失败</p>';
+    }
+}
+
+function renderClothes() {
+    if (allClothes.length === 0) {
+        document.getElementById('clothingGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">暂无衣物，点击"添加衣物"开始添加</p>';
+        return;
+    }
+
+    const html = allClothes.map(item => `
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <img src="${item.image_url}" alt="${item.name}" class="w-full h-48 object-cover">
+            <div class="p-4">
+                <h3 class="font-medium text-gray-900">${item.name}</h3>
+                <p class="text-sm text-gray-500">${item.category}</p>
+                ${item.color ? `<div class="flex flex-wrap gap-1 mt-2">
+                    ${JSON.parse(item.color || '[]').map(c => `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">${c}</span>`).join('')}
+                </div>` : ''}
+                <button onclick="deleteClothing('${item.id}')" class="mt-3 text-red-600 hover:text-red-700 text-sm">删除</button>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('clothingGrid').innerHTML = html;
+}
+
+async function deleteClothing(id) {
+    if (!confirm('确定要删除这件衣物吗？')) return;
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch(`/api/v1/wardrobe/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadClothes();
+        } else {
+            alert('删除失败');
+        }
+    } catch (error) {
+        alert('删除失败: ' + error.message);
+    }
+}
+
+// Event listeners
+document.getElementById('categoryFilter').addEventListener('change', loadClothes);
+document.getElementById('searchInput').addEventListener('input', debounce(loadClothes, 300));
+
+document.getElementById('addClothingBtn').addEventListener('click', () => {
+    document.getElementById('addClothingModal').classList.remove('hidden');
+    document.getElementById('addClothingModal').classList.add('flex');
+});
+
+document.getElementById('closeModal').addEventListener('click', () => {
+    document.getElementById('addClothingModal').classList.add('hidden');
+    document.getElementById('addClothingModal').classList.remove('flex');
+});
+
+document.getElementById('addClothingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const fileInput = document.getElementById('clothingImage');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('请选择图片');
+        return;
+    }
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        // Upload image first
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch('/api/v1/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!uploadRes.ok) {
+            throw new Error('图片上传失败');
+        }
+
+        const uploadData = await uploadRes.json();
+
+        // Create clothing
+        const clothingData = {
+            name: document.getElementById('clothingName').value,
+            category: document.getElementById('clothingCategory').value,
+            color: document.getElementById('clothingColor').value ? JSON.stringify(document.getElementById('clothingColor').value.split(',').map(s => s.trim())) : null,
+            style: document.getElementById('clothingStyle').value ? JSON.stringify(document.getElementById('clothingStyle').value.split(',').map(s => s.trim())) : null,
+            season: document.getElementById('clothingSeason').value ? JSON.stringify(document.getElementById('clothingSeason').value.split(',').map(s => s.trim())) : null,
+            brand: document.getElementById('clothingBrand').value || null,
+            size: document.getElementById('clothingSize').value || null,
+            material: document.getElementById('clothingMaterial').value || null,
+            image_url: uploadData.url
+        };
+
+        const createRes = await fetch('/api/v1/wardrobe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(clothingData)
+        });
+
+        if (createRes.ok) {
+            // Close modal and reload
+            document.getElementById('addClothingModal').classList.add('hidden');
+            document.getElementById('addClothingModal').classList.remove('flex');
+            document.getElementById('addClothingForm').reset();
+            loadClothes();
+        } else {
+            const error = await createRes.json();
+            alert(error.detail || '添加失败');
+        }
+    } catch (error) {
+        alert('添加失败: ' + error.message);
+    }
+});
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Initial load
+loadClothes();
+</script>
+{% endblock %}

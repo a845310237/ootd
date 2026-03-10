@@ -1,0 +1,969 @@
+{% extends "base.html" %}
+
+{% block title %}我的穿搭 - 穿搭AI{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">我的穿搭</h1>
+        <div class="flex gap-3">
+            <button id="generateOutfitBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                AI生成穿搭
+            </button>
+            <button id="diyOutfitBtn" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                DIY穿搭
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white shadow rounded-lg p-4 mb-6">
+    <div class="flex flex-wrap gap-4">
+        <div>
+            <select id="styleFilter"
+                class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">所有风格</option>
+                <option value="休闲">休闲</option>
+                <option value="运动">运动</option>
+                <option value="正式">正式</option>
+                <option value="时尚">时尚</option>
+                <option value="可爱">可爱</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Outfits Grid -->
+<div id="outfitsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <p class="text-gray-500 text-center col-span-full">加载中...</p>
+</div>
+
+<!-- Generate Outfit Modal -->
+<div id="generateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">AI生成穿搭</h2>
+            <button class="close-modal text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="generateForm">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="style" class="block text-sm font-medium text-gray-700 mb-2">风格</label>
+                    <select id="style" name="style" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">请选择</option>
+                        <option value="休闲">休闲</option>
+                        <option value="运动">运动</option>
+                        <option value="正式">正式</option>
+                        <option value="时尚">时尚</option>
+                        <option value="可爱">可爱</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="occasion" class="block text-sm font-medium text-gray-700 mb-2">场合</label>
+                    <select id="occasion" name="occasion" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">请选择</option>
+                        <option value="日常">日常</option>
+                        <option value="工作">工作</option>
+                        <option value="约会">约会</option>
+                        <option value="运动">运动</option>
+                        <option value="聚会">聚会</option>
+                        <option value="旅行">旅行</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="season" class="block text-sm font-medium text-gray-700 mb-2">季节</label>
+                    <select id="season" name="season" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">请选择</option>
+                        <option value="春">春</option>
+                        <option value="夏">夏</option>
+                        <option value="秋">秋</option>
+                        <option value="冬">冬</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 选择衣物区域 -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">选择衣物（可选，不选则AI从全部衣柜中选择）</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="selectFromWardrobeBtn" class="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                            从衣柜选择
+                        </button>
+                        <button type="button" id="uploadClothesBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                            上传新衣物
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 已选择的衣物 -->
+                <div id="selectedClothesDisplay" class="hidden mb-3">
+                    <div class="border rounded-lg p-3 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">已选择的衣物：</span>
+                            <button type="button" id="clearSelectionBtn" class="text-xs text-red-600 hover:text-red-700">清除选择</button>
+                        </div>
+                        <div id="selectedClothesGrid" class="grid grid-cols-4 gap-2">
+                            <!-- Selected clothes will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 衣柜选择器 -->
+            <div id="wardrobeSelector" class="hidden mb-4 border rounded-lg p-4">
+                <h3 class="font-medium text-gray-900 mb-3">从衣柜选择衣物</h3>
+                <div class="mb-3">
+                    <select id="categoryFilter" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        <option value="">所有分类</option>
+                        <option value="上衣">上衣</option>
+                        <option value="裤子">裤子</option>
+                        <option value="裙子">裙子</option>
+                        <option value="外套">外套</option>
+                        <option value="鞋子">鞋子</option>
+                        <option value="配饰">配饰</option>
+                    </select>
+                </div>
+                <div id="wardrobeGrid" class="grid grid-cols-4 gap-3 max-h-60 overflow-y-auto">
+                    <!-- Clothes will be loaded here -->
+                </div>
+                <button type="button" id="confirmWardrobeSelection" class="mt-3 w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">
+                    确认选择
+                </button>
+            </div>
+
+            <!-- 上传区域 -->
+            <div id="uploadArea" class="hidden mb-4 border-2 border-dashed border-gray-300 rounded-lg p-6">
+                <h3 class="font-medium text-gray-900 mb-3">上传新衣物图片</h3>
+                <div class="flex items-center justify-center w-full">
+                    <label for="clothingImageUpload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-8 h-8 mb-3 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                            </svg>
+                            <p class="text-sm text-gray-500"><span class="font-semibold">点击上传</span> 或拖拽图片到此处</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF (最大 10MB)</p>
+                        </div>
+                        <input id="clothingImageUpload" type="file" class="hidden" accept="image/*" multiple />
+                    </label>
+                </div>
+                <div id="uploadedClothesGrid" class="grid grid-cols-4 gap-3 mt-4">
+                    <!-- Uploaded clothes will be displayed here -->
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <button type="button" id="confirmUploadSelection" class="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                        确认使用上传的图片
+                    </button>
+                    <button type="button" id="addToWardrobeBtn" class="flex-1 bg-green-600 text-white py-2 rounded-md hover:bg-green-700">
+                        添加到衣柜
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">
+                生成穿搭
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- DIY Outfit Modal -->
+<div id="diyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">DIY穿搭</h2>
+            <button class="close-modal text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="diyForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="diyName" class="block text-sm font-medium text-gray-700 mb-2">穿搭名称</label>
+                    <input type="text" id="diyName" name="name" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label for="diyStyle" class="block text-sm font-medium text-gray-700 mb-2">风格</label>
+                    <input type="text" id="diyStyle" name="style" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label for="diyOccasion" class="block text-sm font-medium text-gray-700 mb-2">场合</label>
+                    <input type="text" id="diyOccasion" name="occasion"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label for="diySeason" class="block text-sm font-medium text-gray-700 mb-2">季节</label>
+                    <input type="text" id="diySeason" name="season"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <!-- 选择衣物区域 -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">选择衣物</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="diySelectFromWardrobeBtn" class="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                            从衣柜选择
+                        </button>
+                        <button type="button" id="diyUploadClothesBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                            上传新衣物
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 已选择的衣物 -->
+                <div id="diySelectedClothesDisplay" class="hidden mb-3">
+                    <div class="border rounded-lg p-3 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">已选择的衣物：</span>
+                            <button type="button" id="diyClearSelectionBtn" class="text-xs text-red-600 hover:text-red-700">清除选择</button>
+                        </div>
+                        <div id="diySelectedClothesGrid" class="grid grid-cols-4 gap-2">
+                            <!-- Selected clothes will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 衣柜选择器 -->
+                <div id="diyWardrobeSelector" class="hidden border rounded-lg p-4">
+                    <h3 class="font-medium text-gray-900 mb-3">从衣柜选择衣物</h3>
+                    <div class="mb-3">
+                        <select id="diyCategoryFilter" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <option value="">所有分类</option>
+                            <option value="上衣">上衣</option>
+                            <option value="裤子">裤子</option>
+                            <option value="裙子">裙子</option>
+                            <option value="外套">外套</option>
+                            <option value="鞋子">鞋子</option>
+                            <option value="配饰">配饰</option>
+                        </select>
+                    </div>
+                    <div id="diyWardrobeGrid" class="grid grid-cols-4 gap-3 max-h-60 overflow-y-auto">
+                        <!-- Clothes will be loaded here -->
+                    </div>
+                    <button type="button" id="diyConfirmWardrobeSelection" class="mt-3 w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">
+                        确认选择
+                    </button>
+                </div>
+
+                <!-- 上传区域 -->
+                <div id="diyUploadArea" class="hidden border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <h3 class="font-medium text-gray-900 mb-3">上传新衣物图片</h3>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="diyClothingImageUpload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-3 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                </svg>
+                                <p class="text-sm text-gray-500"><span class="font-semibold">点击上传</span> 或拖拽图片到此处</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF (最大 10MB)</p>
+                            </div>
+                            <input id="diyClothingImageUpload" type="file" class="hidden" accept="image/*" multiple />
+                        </label>
+                    </div>
+                    <div id="diyUploadedClothesGrid" class="grid grid-cols-4 gap-3 mt-4">
+                        <!-- Uploaded clothes will be displayed here -->
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" id="diyConfirmUploadSelection" class="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                            确认使用
+                        </button>
+                        <button type="button" id="diyAddToWardrobeBtn" class="flex-1 bg-green-600 text-white py-2 rounded-md hover:bg-green-700">
+                            添加到衣柜
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700">
+                创建穿搭
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Outfit Detail Modal -->
+<div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold" id="detailTitle">穿搭详情</h2>
+            <button class="close-modal text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="detailContent">
+            <!-- Content loaded dynamically -->
+        </div>
+
+        <button onclick="deleteCurrentOutfit()" class="mt-6 w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">
+            删除穿搭
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let allOutfits = [];
+let allClothes = [];
+let currentOutfitId = null;
+let selectedClothesForAI = [];
+let selectedClothesForDIY = [];
+let uploadedClothesForAI = [];
+let uploadedClothesForDIY = [];
+
+async function loadOutfits() {
+    const token = localStorage.getItem('access_token');
+    const style = document.getElementById('styleFilter').value;
+
+    let url = '/api/v1/outfits?';
+    if (style) url += `style=${encodeURIComponent(style)}&`;
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            allOutfits = await response.json();
+            renderOutfits();
+        } else {
+            document.getElementById('outfitsGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">加载失败</p>';
+        }
+    } catch (error) {
+        document.getElementById('outfitsGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">加载失败</p>';
+    }
+}
+
+function renderOutfits() {
+    if (allOutfits.length === 0) {
+        document.getElementById('outfitsGrid').innerHTML = '<p class="text-gray-500 text-center col-span-full">暂无穿搭，点击上方按钮开始创建</p>';
+        return;
+    }
+
+    const html = allOutfits.map(outfit => `
+        <div class="bg-white shadow rounded-lg p-6 cursor-pointer hover:shadow-lg transition-shadow" onclick="showOutfitDetail('${outfit.id}')">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-medium text-gray-900">${outfit.name}</h3>
+                ${outfit.ai_generated ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">AI生成</span>' : ''}
+            </div>
+            <p class="text-sm text-gray-500 mb-2">${outfit.style}</p>
+            ${outfit.occasion ? `<p class="text-sm text-gray-500">${outfit.occasion}</p>` : ''}
+            <p class="text-xs text-gray-400 mt-4">${new Date(outfit.created_at).toLocaleDateString()}</p>
+        </div>
+    `).join('');
+
+    document.getElementById('outfitsGrid').innerHTML = html;
+}
+
+async function showOutfitDetail(id) {
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch(`/api/v1/outfits/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const outfit = await response.json();
+            currentOutfitId = id;
+
+            document.getElementById('detailTitle').textContent = outfit.name;
+
+            const tips = JSON.parse(outfit.tips || '[]');
+
+            // Build clothing items HTML
+            let clothingHtml = '';
+            if (outfit.items && outfit.items.length > 0) {
+                clothingHtml = `
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">包含衣物</h4>
+                        <div class="grid grid-cols-4 gap-2">
+                            ${outfit.items.map(item => `
+                                <div class="text-center">
+                                    <img src="${item.image_url}" alt="${item.name}" class="w-full h-20 object-cover rounded">
+                                    <p class="text-xs text-gray-600 mt-1">${item.name}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="space-y-4">
+                    ${clothingHtml}
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">风格</h4>
+                        <p class="text-gray-600">${outfit.style}</p>
+                    </div>
+                    ${outfit.occasion ? `
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">场合</h4>
+                        <p class="text-gray-600">${outfit.occasion}</p>
+                    </div>
+                    ` : ''}
+                    ${outfit.season ? `
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">季节</h4>
+                        <p class="text-gray-600">${outfit.season}</p>
+                    </div>
+                    ` : ''}
+                    ${outfit.reasoning ? `
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">搭配理由</h4>
+                        <p class="text-gray-600">${outfit.reasoning}</p>
+                    </div>
+                    ` : ''}
+                    ${tips.length > 0 ? `
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">穿搭小贴士</h4>
+                        <ul class="list-disc list-inside text-gray-600">
+                            ${tips.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModal').classList.add('flex');
+        }
+    } catch (error) {
+        alert('加载详情失败');
+    }
+}
+
+async function deleteCurrentOutfit() {
+    if (!currentOutfitId || !confirm('确定要删除这个穿搭吗？')) return;
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch(`/api/v1/outfits/${currentOutfitId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+            loadOutfits();
+        } else {
+            alert('删除失败');
+        }
+    } catch (error) {
+        alert('删除失败');
+    }
+}
+
+// Load clothes for wardrobe selector
+async function loadClothesForWardrobe() {
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch('/api/v1/wardrobe', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            allClothes = await response.json();
+        }
+    } catch (error) {
+        console.error('Failed to load clothes:', error);
+    }
+}
+
+// Render wardrobe selector
+function renderWardrobeSelector(containerId, selectedClothes) {
+    const categoryFilter = document.getElementById(containerId === 'wardrobeGrid' ? 'categoryFilter' : 'diyCategoryFilter');
+    const category = categoryFilter ? categoryFilter.value : '';
+
+    let filteredClothes = allClothes;
+    if (category) {
+        filteredClothes = allClothes.filter(c => c.category === category);
+    }
+
+    const html = filteredClothes.map(item => {
+        const isSelected = selectedClothes.some(c => c.id === item.id);
+        return `
+            <div class="clothing-item ${isSelected ? 'ring-2 ring-indigo-500' : ''} cursor-pointer border rounded-lg p-2 hover:shadow-md transition"
+                 onclick="toggleClothingSelection('${containerId}', '${item.id}')">
+                <img src="${item.image_url}" alt="${item.name}" class="w-full h-20 object-cover rounded mb-2">
+                <p class="text-xs text-center font-medium">${item.name}</p>
+                <p class="text-xs text-center text-gray-500">${item.category}</p>
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById(containerId).innerHTML = html || '<p class="text-gray-500 col-span-full">暂无衣物</p>';
+}
+
+// Toggle clothing selection
+function toggleClothingSelection(containerId, clothingId) {
+    const item = allClothes.find(c => c.id === clothingId);
+    if (!item) return;
+
+    let targetArray;
+    if (containerId === 'wardrobeGrid' || containerId === 'diyWardrobeGrid') {
+        targetArray = containerId === 'wardrobeGrid' ? selectedClothesForAI : selectedClothesForDIY;
+    } else {
+        return;
+    }
+
+    const index = targetArray.findIndex(c => c.id === clothingId);
+    if (index > -1) {
+        targetArray.splice(index, 1);
+    } else {
+        targetArray.push(item);
+    }
+
+    renderWardrobeSelector(containerId, targetArray);
+    updateSelectedClothesDisplay(containerId === 'wardrobeGrid' ? 'selectedClothesDisplay' : 'diySelectedClothesDisplay', targetArray, containerId === 'wardrobeGrid' ? 'selectedClothesGrid' : 'diySelectedClothesGrid');
+}
+
+// Update selected clothes display
+function updateSelectedClothesDisplay(containerId, gridId, clothes) {
+    const container = document.getElementById(containerId);
+    const grid = document.getElementById(gridId);
+
+    if (clothes.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+
+    const html = clothes.map(item => `
+        <div class="relative group">
+            <img src="${item.image_url}" alt="${item.name}" class="w-full h-16 object-cover rounded">
+            <button type="button" onclick="removeFromSelection('${containerId}', '${item.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition">×</button>
+            <p class="text-xs text-center mt-1">${item.name}</p>
+        </div>
+    `).join('');
+
+    grid.innerHTML = html;
+}
+
+// Remove from selection
+function removeFromSelection(displayContainerId, clothingId) {
+    let targetArray = displayContainerId === 'selectedClothesDisplay' ? selectedClothesForAI : selectedClothesForDIY;
+    const gridId = displayContainerId === 'selectedClothesDisplay' ? 'selectedClothesGrid' : 'diySelectedClothesGrid';
+
+    const index = targetArray.findIndex(c => c.id === clothingId);
+    if (index > -1) {
+        targetArray.splice(index, 1);
+    }
+
+    updateSelectedClothesDisplay(displayContainerId, gridId, targetArray);
+
+    // Re-render the wardrobe selector to update selection state
+    const wardrobeGridId = displayContainerId === 'selectedClothesDisplay' ? 'wardrobeGrid' : 'diyWardrobeGrid';
+    if (!document.getElementById(wardrobeGridId).classList.contains('hidden')) {
+        renderWardrobeSelector(wardrobeGridId, targetArray);
+    }
+}
+
+// Handle image upload
+async function handleImageUpload(input, targetArray) {
+    const files = input.files;
+    if (!files || files.length === 0) return;
+
+    const token = localStorage.getItem('access_token');
+
+    for (let file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/v1/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                targetArray.push({
+                    id: 'uploaded_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    image_url: data.url,
+                    name: file.name.split('.')[0],
+                    isUploaded: true
+                });
+            } else {
+                alert('上传失败: ' + file.name);
+            }
+        } catch (error) {
+            alert('上传失败: ' + file.name);
+        }
+    }
+
+    // Render uploaded clothes
+    const isForAI = targetArray === uploadedClothesForAI;
+    const gridId = isForAI ? 'uploadedClothesGrid' : 'diyUploadedClothesGrid';
+
+    const html = targetArray.map(item => `
+        <div class="relative group">
+            <img src="${item.image_url}" alt="${item.name}" class="w-full h-20 object-cover rounded">
+            <button type="button" onclick="removeUploaded('${gridId}', '${item.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition">×</button>
+            <p class="text-xs text-center mt-1">${item.name}</p>
+        </div>
+    `).join('');
+
+    document.getElementById(gridId).innerHTML = html || '<p class="text-gray-500 col-span-full">暂无上传</p>';
+}
+
+// Remove uploaded item
+function removeUploaded(gridId, itemId) {
+    let targetArray = gridId === 'uploadedClothesGrid' ? uploadedClothesForAI : uploadedClothesForDIY;
+
+    const index = targetArray.findIndex(c => c.id === itemId);
+    if (index > -1) {
+        targetArray.splice(index, 1);
+    }
+
+    // Re-render
+    const html = targetArray.map(item => `
+        <div class="relative group">
+            <img src="${item.image_url}" alt="${item.name}" class="w-full h-20 object-cover rounded">
+            <button type="button" onclick="removeUploaded('${gridId}', '${item.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition">×</button>
+            <p class="text-xs text-center mt-1">${item.name}</p>
+        </div>
+    `).join('');
+
+    document.getElementById(gridId).innerHTML = html || '<p class="text-gray-500 col-span-full">暂无上传</p>';
+}
+
+// Event listeners
+document.getElementById('styleFilter').addEventListener('change', loadOutfits);
+
+// Generate outfit modal
+document.getElementById('generateOutfitBtn').addEventListener('click', async () => {
+    selectedClothesForAI = [];
+    uploadedClothesForAI = [];
+    await loadClothesForWardrobe();
+    document.getElementById('generateModal').classList.remove('hidden');
+    document.getElementById('generateModal').classList.add('flex');
+});
+
+// DIY outfit modal
+document.getElementById('diyOutfitBtn').addEventListener('click', async () => {
+    selectedClothesForDIY = [];
+    uploadedClothesForDIY = [];
+    await loadClothesForWardrobe();
+    document.getElementById('diyModal').classList.remove('hidden');
+    document.getElementById('diyModal').classList.add('flex');
+});
+
+// Close modals
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+    });
+});
+
+// AI Generate - Select from wardrobe
+document.getElementById('selectFromWardrobeBtn').addEventListener('click', () => {
+    document.getElementById('wardrobeSelector').classList.remove('hidden');
+    renderWardrobeSelector('wardrobeGrid', selectedClothesForAI);
+});
+
+// AI Generate - Upload clothes
+document.getElementById('uploadClothesBtn').addEventListener('click', () => {
+    document.getElementById('uploadArea').classList.remove('hidden');
+});
+
+// AI Generate - Category filter
+document.getElementById('categoryFilter').addEventListener('change', () => {
+    renderWardrobeSelector('wardrobeGrid', selectedClothesForAI);
+});
+
+// AI Generate - Confirm wardrobe selection
+document.getElementById('confirmWardrobeSelection').addEventListener('click', () => {
+    document.getElementById('wardrobeSelector').classList.add('hidden');
+});
+
+// AI Generate - Clear selection
+document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+    selectedClothesForAI = [];
+    updateSelectedClothesDisplay('selectedClothesDisplay', 'selectedClothesGrid', selectedClothesForAI);
+});
+
+// AI Generate - Image upload
+document.getElementById('clothingImageUpload').addEventListener('change', function() {
+    handleImageUpload(this, uploadedClothesForAI);
+});
+
+// AI Generate - Confirm upload selection
+document.getElementById('confirmUploadSelection').addEventListener('click', () => {
+    // Add uploaded clothes to selection
+    uploadedClothesForAI.forEach(item => {
+        if (!selectedClothesForAI.some(c => c.id === item.id)) {
+            selectedClothesForAI.push(item);
+        }
+    });
+    updateSelectedClothesDisplay('selectedClothesDisplay', 'selectedClothesGrid', selectedClothesForAI);
+    uploadedClothesForAI = [];
+    document.getElementById('uploadArea').classList.add('hidden');
+    document.getElementById('uploadedClothesGrid').innerHTML = '';
+});
+
+// AI Generate - Add to wardrobe
+document.getElementById('addToWardrobeBtn').addEventListener('click', async () => {
+    const token = localStorage.getItem('access_token');
+
+    for (let item of uploadedClothesForAI) {
+        const clothingData = {
+            name: item.name,
+            category: '其他',
+            color: '["未知"]',
+            style: '["休闲"]',
+            season: '["春","夏","秋","冬"]',
+            image_url: item.image_url
+        };
+
+        try {
+            const response = await fetch('/api/v1/wardrobe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(clothingData)
+            });
+
+            if (response.ok) {
+                await loadClothesForWardrobe();
+            } else {
+                alert('添加到衣柜失败: ' + item.name);
+            }
+        } catch (error) {
+            alert('添加到衣柜失败: ' + item.name);
+        }
+    }
+
+    uploadedClothesForAI = [];
+    document.getElementById('uploadArea').classList.add('hidden');
+    document.getElementById('uploadedClothesGrid').innerHTML = '';
+    alert('已添加到衣柜！');
+});
+
+// DIY - Select from wardrobe
+document.getElementById('diySelectFromWardrobeBtn').addEventListener('click', () => {
+    document.getElementById('diyWardrobeSelector').classList.remove('hidden');
+    renderWardrobeSelector('diyWardrobeGrid', selectedClothesForDIY);
+});
+
+// DIY - Upload clothes
+document.getElementById('diyUploadClothesBtn').addEventListener('click', () => {
+    document.getElementById('diyUploadArea').classList.remove('hidden');
+});
+
+// DIY - Category filter
+document.getElementById('diyCategoryFilter').addEventListener('change', () => {
+    renderWardrobeSelector('diyWardrobeGrid', selectedClothesForDIY);
+});
+
+// DIY - Confirm wardrobe selection
+document.getElementById('diyConfirmWardrobeSelection').addEventListener('click', () => {
+    document.getElementById('diyWardrobeSelector').classList.add('hidden');
+});
+
+// DIY - Clear selection
+document.getElementById('diyClearSelectionBtn').addEventListener('click', () => {
+    selectedClothesForDIY = [];
+    updateSelectedClothesDisplay('diySelectedClothesDisplay', 'diySelectedClothesGrid', selectedClothesForDIY);
+});
+
+// DIY - Image upload
+document.getElementById('diyClothingImageUpload').addEventListener('change', function() {
+    handleImageUpload(this, uploadedClothesForDIY);
+});
+
+// DIY - Confirm upload selection
+document.getElementById('diyConfirmUploadSelection').addEventListener('click', () => {
+    uploadedClothesForDIY.forEach(item => {
+        if (!selectedClothesForDIY.some(c => c.id === item.id)) {
+            selectedClothesForDIY.push(item);
+        }
+    });
+    updateSelectedClothesDisplay('diySelectedClothesDisplay', 'diySelectedClothesGrid', selectedClothesForDIY);
+    uploadedClothesForDIY = [];
+    document.getElementById('diyUploadArea').classList.add('hidden');
+    document.getElementById('diyUploadedClothesGrid').innerHTML = '';
+});
+
+// DIY - Add to wardrobe
+document.getElementById('diyAddToWardrobeBtn').addEventListener('click', async () => {
+    const token = localStorage.getItem('access_token');
+
+    for (let item of uploadedClothesForDIY) {
+        const clothingData = {
+            name: item.name,
+            category: '其他',
+            color: '["未知"]',
+            style: '["休闲"]',
+            season: '["春","夏","秋","冬"]',
+            image_url: item.image_url
+        };
+
+        try {
+            const response = await fetch('/api/v1/wardrobe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(clothingData)
+            });
+
+            if (response.ok) {
+                await loadClothesForWardrobe();
+            } else {
+                alert('添加到衣柜失败: ' + item.name);
+            }
+        } catch (error) {
+            alert('添加到衣柜失败: ' + item.name);
+        }
+    }
+
+    uploadedClothesForDIY = [];
+    document.getElementById('diyUploadArea').classList.add('hidden');
+    document.getElementById('diyUploadedClothesGrid').innerHTML = '';
+    alert('已添加到衣柜！');
+});
+
+// Generate outfit form submission
+document.getElementById('generateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const data = {
+        style: document.getElementById('style').value,
+        occasion: document.getElementById('occasion').value,
+        season: document.getElementById('season').value
+    };
+
+    // Add selected clothing IDs if any
+    if (selectedClothesForAI.length > 0) {
+        data.clothing_ids = selectedClothesForAI.map(c => c.id);
+    }
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch('/api/v1/outfits/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            document.getElementById('generateModal').classList.add('hidden');
+            document.getElementById('generateModal').classList.remove('flex');
+            document.getElementById('generateForm').reset();
+            selectedClothesForAI = [];
+            uploadedClothesForAI = [];
+            document.getElementById('selectedClothesDisplay').classList.add('hidden');
+            loadOutfits();
+        } else {
+            const error = await response.json();
+            alert(error.detail || '生成失败');
+        }
+    } catch (error) {
+        alert('生成失败: ' + error.message);
+    }
+});
+
+// DIY form submission
+document.getElementById('diyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (selectedClothesForDIY.length === 0) {
+        alert('请至少选择一件衣物');
+        return;
+    }
+
+    const clothingIds = selectedClothesForDIY.map(c => c.id);
+
+    const data = {
+        name: document.getElementById('diyName').value,
+        style: document.getElementById('diyStyle').value,
+        occasion: document.getElementById('diyOccasion').value || null,
+        season: document.getElementById('diySeason').value || null,
+        clothing_ids: clothingIds
+    };
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch('/api/v1/outfits', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            document.getElementById('diyModal').classList.add('hidden');
+            document.getElementById('diyModal').classList.remove('flex');
+            document.getElementById('diyForm').reset();
+            selectedClothesForDIY = [];
+            uploadedClothesForDIY = [];
+            document.getElementById('diySelectedClothesDisplay').classList.add('hidden');
+            loadOutfits();
+        } else {
+            const error = await response.json();
+            alert(error.detail || '创建失败');
+        }
+    } catch (error) {
+        alert('创建失败: ' + error.message);
+    }
+});
+
+// Initial load
+loadOutfits();
+</script>
+{% endblock %}

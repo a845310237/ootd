@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}穿搭AI - 智能穿搭助手{% endblock %}
+
+{% block content %}
+<div class="text-center py-12">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">欢迎来到穿搭AI</h1>
+    <p class="text-xl text-gray-600 mb-8">您的智能穿搭助手，让每一次穿搭都恰到好处</p>
+
+    {% if not current_user %}
+    <div class="flex justify-center space-x-4">
+        <a href="/auth/register" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700">
+            立即注册
+        </a>
+        <a href="/auth/login" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-md font-medium hover:bg-gray-300">
+            登录账号
+        </a>
+    </div>
+    {% else %}
+    <div class="flex justify-center">
+        <a href="/dashboard" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700">
+            进入仪表板
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+    <div class="bg-white shadow-lg rounded-lg p-6 text-center">
+        <div class="text-indigo-600 text-4xl mb-4">👔</div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">智能衣柜</h3>
+        <p class="text-gray-600">管理您的衣物，轻松分类整理</p>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-6 text-center">
+        <div class="text-indigo-600 text-4xl mb-4">✨</div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">AI推荐</h3>
+        <p class="text-gray-600">基于场景和风格的智能搭配</p>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-6 text-center">
+        <div class="text-indigo-600 text-4xl mb-4">📸</div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">穿搭记录</h3>
+        <p class="text-gray-600">保存您喜欢的穿搭方案</p>
+    </div>
+</div>
+{% endblock %}

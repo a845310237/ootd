@@ -1,0 +1,99 @@
+// Prisma Schema for OOTD (Outfit of the Day) Application
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - stores user account and profile information
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique @map("email")
+  name      String?  @map("name")
+  password  String   @map("password")
+  height    Int?     @map("height")     // cm
+  weight    Int?     @map("weight")     // kg
+  bodyType  String?  @map("body_type")  // 体型: 苗条/标准/丰满
+  skinTone  String?  @map("skin_tone")  // 肤色
+  avatar    String?  @map("avatar")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  clothes   Clothing[]
+  outfits   Outfit[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// Clothing model - stores individual clothing items
+model Clothing {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String   @map("name")
+  category    String   @map("category")    // 上衣/裤子/鞋子/配饰等
+  color       String   @map("color")       // JSON array: ["红色", "蓝色"]
+  style       String   @map("style")       // JSON array: ["休闲", "运动"]
+  season      String   @map("season")      // JSON array: ["春", "夏"]
+  brand       String?  @map("brand")
+  size        String?  @map("size")
+  material    String?  @map("material")
+  imageUrl    String   @map("image_url")   // 衣物照片
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitItems OutfitItem[]
+
+  @@index([userId])
+  @@index([category])
+  @@map("clothing")
+}
+
+// Outfit model - stores outfit combinations
+model Outfit {
+  id          String      @id @default(cuid())
+  userId      String      @map("user_id")
+  name        String      @map("name")
+  style       String      @map("style")          // 风格描述
+  occasion    String?     @map("occasion")       // 场合
+  season      String?     @map("season")         // 季节
+  aiGenerated Boolean     @default(false) @map("ai_generated")
+  resultUrl   String?     @map("result_url")     // AI生成的效果图
+  prompt      String?     @map("prompt")         // 生成提示词
+  reasoning   String?     @db.Text @map("reasoning") // 搭配理由
+  tips        String?     @db.Text @map("tips")  // 穿搭小贴士 JSON array
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OutfitItem[]
+
+  @@index([userId])
+  @@index([style])
+  @@map("outfits")
+}
+
+// OutfitItem model - junction table for Outfit and Clothing
+model OutfitItem {
+  id         String   @id @default(cuid())
+  outfitId   String   @map("outfit_id")
+  clothingId String   @map("clothing_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+
+  @@unique([outfitId, clothingId])
+  @@index([outfitId])
+  @@index([clothingId])
+  @@map("outfit_items")
+}

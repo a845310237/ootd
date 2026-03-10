@@ -1,0 +1,12 @@
+{% macro card(title, content='', extra_classes='') %}
+<div class="bg-white shadow-lg rounded-lg {{ extra_classes }}">
+    {% if title %}
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">{{ title }}</h3>
+    </div>
+    {% endif %}
+    <div class="px-6 py-4">
+        {{ content }}
+    </div>
+</div>
+{% endmacro %}
