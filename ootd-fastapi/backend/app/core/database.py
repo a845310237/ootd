@@ -4,12 +4,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-# Create database engine
+# Create database engine with SQLite-specific settings for thread safety
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=3600,
     echo=settings.DEBUG,
+    connect_args={"check_same_thread": False}  # Allow SQLite to work across threads
 )
 
 # Create SessionLocal class

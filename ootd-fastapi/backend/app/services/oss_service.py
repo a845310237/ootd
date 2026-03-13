@@ -1,5 +1,11 @@
 """Aliyun OSS service for file uploads."""
-import oss2
+try:
+    import oss2
+    OSS2_AVAILABLE = True
+except ImportError:
+    OSS2_AVAILABLE = False
+    print("Warning: oss2 module not available. OSS functionality will be disabled.")
+
 from typing import Optional, Tuple
 from app.core.config import settings
 import uuid
@@ -12,6 +18,10 @@ class OSSService:
 
     def __init__(self):
         """Initialize OSS service with credentials from settings."""
+        # Check if oss2 is available
+        if not OSS2_AVAILABLE:
+            raise ValueError("OSS functionality is not available (oss2 module not installed)")
+
         # Validate OSS configuration
         if not all([settings.OSS_ACCESS_KEY_ID, settings.OSS_ACCESS_KEY_SECRET, settings.OSS_BUCKET, settings.OSS_REGION]):
             raise ValueError(
@@ -148,8 +158,16 @@ class OSSService:
 
 
 # Create global OSS service instance
+oss_service = None
 try:
-    oss_service = OSSService()
+    if OSS2_AVAILABLE:
+        oss_service = OSSService()
+        print("OSS service initialized successfully")
+    else:
+        print("OSS service disabled (oss2 module not available)")
 except ValueError as e:
     print(f"Warning: OSS service initialization failed: {e}")
+    oss_service = None
+except Exception as e:
+    print(f"Warning: OSS service initialization failed with unexpected error: {e}")
     oss_service = None

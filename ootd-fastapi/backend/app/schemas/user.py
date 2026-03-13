@@ -55,7 +55,8 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # For Pydantic v2
+        orm_mode = True  # For Pydantic v1 compatibility
 
 
 class Token(BaseModel):

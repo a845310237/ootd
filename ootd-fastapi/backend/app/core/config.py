@@ -1,5 +1,5 @@
 """Application configuration."""
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
 from typing import List
 
 
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key"
 
     # Database
-    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/ootd_fastapi"
+    DATABASE_URL: str = "sqlite:///./ootd.db"
 
     # JWT
     JWT_SECRET_KEY: str = "your-jwt-secret-key"
