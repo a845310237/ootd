@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.clothing import Clothing
 from app.models.outfit import Outfit, OutfitItem
-from app.schemas.outfit import OutfitCreate, OutfitGenerate, OutfitUpdate, OutfitResponse, AIOutfitRequest
+from app.schemas.outfit import OutfitCreate, OutfitGenerate, OutfitUpdate, OutfitResponse, AIOutfitRequest, OutfitItemResponse
 from app.api.deps import get_current_user
 from app.services.minimax_service import minimax_service
 
@@ -163,7 +163,8 @@ async def generate_outfit(
         clothing_items=clothing_desc,
         style=request.style,
         occasion=request.occasion,
-        season=request.season
+        season=request.season,
+        custom_description=request.custom_description
     )
 
     # Generate AI image with reference image if provided
@@ -171,6 +172,13 @@ async def generate_outfit(
         prompt=prompt,
         reference_image=request.reference_image
     )
+
+    # Check if image generation was successful
+    if not result_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate outfit image. Please check your MiniMax API configuration and try again."
+        )
 
     # Create outfit
     outfit = Outfit(
@@ -184,6 +192,7 @@ async def generate_outfit(
         result_url=result_url,
         prompt=prompt,
         reasoning=f"AI-generated {request.style} outfit for {request.occasion} in {request.season} season." +
+                 (f" Custom requirements: {request.custom_description}" if request.custom_description else "") +
                  (" Used your reference image for personalized styling." if request.reference_image else ""),
         tips=json.dumps([
             "This outfit was generated based on your wardrobe",
@@ -207,11 +216,35 @@ async def generate_outfit(
     db.commit()
     db.refresh(outfit)
 
-    # Parse JSON fields for response
-    if outfit.tips:
-        outfit.tips = json.loads(outfit.tips)
+    # Load outfit items for response
+    outfit_items = db.query(OutfitItem).filter(
+        OutfitItem.outfit_id == outfit.id
+    ).all()
 
-    return outfit
+    outfit_items = db.query(OutfitItem).filter(
+        OutfitItem.outfit_id == outfit.id
+    ).all()
+
+    # Create response object manually
+    from app.schemas.outfit import OutfitResponse
+    response_data = {
+        "id": outfit.id,
+        "user_id": outfit.user_id,
+        "name": outfit.name,
+        "style": outfit.style,
+        "occasion": outfit.occasion,
+        "season": outfit.season,
+        "ai_generated": outfit.ai_generated,
+        "result_url": outfit.result_url,
+        "prompt": outfit.prompt,
+        "reasoning": outfit.reasoning,
+        "tips": json.loads(outfit.tips) if isinstance(outfit.tips, str) else outfit.tips,
+        "created_at": outfit.created_at,
+        "updated_at": outfit.updated_at,
+        "items": [OutfitItemResponse.from_orm(item) for item in outfit_items]
+    }
+
+    return OutfitResponse(**response_data)
 
 
 @router.get("/{outfit_id}", response_model=OutfitResponse)

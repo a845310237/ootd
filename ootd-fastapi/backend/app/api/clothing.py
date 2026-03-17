@@ -43,16 +43,27 @@ async def get_clothing(
 
     clothing = query.order_by(Clothing.created_at.desc()).all()
 
-    # Parse JSON fields
+    # Convert to response format
+    clothing_responses = []
     for item in clothing:
-        if item.color:
-            item.color = json.loads(item.color) if isinstance(item.color, str) else item.color
-        if item.style:
-            item.style = json.loads(item.style) if isinstance(item.style, str) else item.style
-        if item.season:
-            item.season = json.loads(item.season) if isinstance(item.season, str) else item.season
+        clothing_data = {
+            "id": item.id,
+            "user_id": item.user_id,
+            "name": item.name,
+            "category": item.category,
+            "color": json.loads(item.color) if item.color and isinstance(item.color, str) else item.color,
+            "style": json.loads(item.style) if item.style and isinstance(item.style, str) else item.style,
+            "season": json.loads(item.season) if item.season and isinstance(item.season, str) else item.season,
+            "brand": item.brand,
+            "size": item.size,
+            "material": item.material,
+            "image_url": item.image_url,
+            "created_at": item.created_at,
+            "updated_at": item.updated_at
+        }
+        clothing_responses.append(ClothingResponse(**clothing_data))
 
-    return clothing
+    return clothing_responses
 
 
 @router.post("", response_model=ClothingResponse, status_code=status.HTTP_201_CREATED)

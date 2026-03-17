@@ -84,6 +84,20 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="自定义描述" prop="custom_description">
+          <el-input
+            v-model="form.custom_description"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入您的特殊要求或偏好，例如：希望看起来更正式一些、颜色以深色为主、体现出专业和权威感等..."
+            maxlength="500"
+            show-word-limit
+          />
+          <div class="form-tip">
+            <p>💡 自定义描述可以帮助AI更好地理解您的需求，生成更符合期望的穿搭建议</p>
+          </div>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleGenerate">
             <el-icon><MagicStick /></el-icon>
@@ -157,7 +171,8 @@ const uploadedImageUrl = ref('')
 const form = reactive({
   style: '',
   occasion: '',
-  season: ''
+  season: '',
+  custom_description: ''
 })
 
 const rules: FormRules = {
@@ -380,6 +395,17 @@ function handleViewResult() {
 .result-section li {
   color: #606266;
   line-height: 1.8;
+}
+
+.form-tip {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.form-tip p {
+  margin: 0;
+  color: #409eff;
+  line-height: 1.5;
 }
 
 .no-result {

@@ -15,7 +15,7 @@ class OutfitItemResponse(OutfitItemBase):
     """Outfit item response schema."""
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class OutfitBase(BaseModel):
@@ -63,7 +63,7 @@ class OutfitResponse(OutfitBase):
     items: List[OutfitItemResponse] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class AIOutfitRequest(BaseModel):
@@ -73,3 +73,4 @@ class AIOutfitRequest(BaseModel):
     occasion: str
     season: str
     reference_image: Optional[str] = None  # URL of reference image (user uploaded or avatar)
+    custom_description: Optional[str] = None  # Custom description for the outfit

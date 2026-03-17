@@ -52,7 +52,7 @@ export const outfitApi = {
   create: (data: { name: string; style: string; occasion?: string; season?: string; clothing_ids: string[] }) =>
     apiClient.post<Outfit>('/outfits/create', data),
 
-  generate: (data: { style: string; occasion: string; season: string }) =>
+  generate: (data: { style: string; occasion: string; season: string; reference_image?: string; custom_description?: string }) =>
     apiClient.post<Outfit>('/outfits/generate', data),
 
   delete: (id: string) =>
